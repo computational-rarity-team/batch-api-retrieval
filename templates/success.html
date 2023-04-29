@@ -1,0 +1,21 @@
+{% extends 'layout.html' %}
+{% block title %} <title>File Uploaded</title> {% endblock%}
+
+
+{% block content %}
+<form method="POST" enctype="multipart/form-data" action="/">
+    <input type="file" id="myFile" name="uploaded-file" accept=".csv">
+    <input type="submit" value="Upload file">
+</form>
+
+  <p style="color:green;">file uploaded successfully</p>
+  <form action="/show_data" target="_blank">
+        <input type="submit" value="Show CSV" />
+    </form>
+{% endblock %}
+
+{% block footer %}
+<footer>created 2023 by the <a href="https://github.com/computational-rarity-team" target="_blank">Computational Rarity Team</a></footer>
+{% endblock %}
+
+{% block script %} <script type="text/javascript"> window.onload = () => console.log('Document ready!'); </script> {% endblock %}

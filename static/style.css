@@ -1,0 +1,23 @@
+@font-face{
+	font-family: 'Open Sans';
+	src: url('https://fonts.googleapis.com/css2?family=Open+Sans&display=swap')
+	font-weight: normal;
+	}
+
+*, body{
+	margin: auto;
+	padding: 1rem;
+	font-family: 'Open Sans', 'Lato', 'sans-serif', 'serif' 'Arial', 'Helvetica';
+
+}
+
+
+
+form{
+	min-width: 400px;
+	min-height: 200px;
+}
+
+input[type=submit]:hover{
+	cursor: pointer;
+}
