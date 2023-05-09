@@ -1,14 +1,16 @@
 {% extends 'layout.html' %}
-{% block title %}CSV Display{% endblock%}
+{% block title %}Check Fields{% endblock%}
 
 
 {% block content %}
-<h1>Uploaded Data</h1> 
-{{ data_var|safe }}
+<h1>Check Fields</h1>
 
-<form action="/show_entries">
-    <input type="submit" value="Find Matches" />
-</form>
+<p>These are the columns of your uploaded CSV, paired with the corresponding parameters for searching the databases:</p>
+<ul>
+{% for column in columns %}
+<li>{{ column }}</li>
+{% endfor %}
+</ul>
 
 {% endblock %}
 

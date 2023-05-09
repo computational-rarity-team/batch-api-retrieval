@@ -5,8 +5,7 @@
 		<meta name="author" content="computational rarity team">
 		<meta name="viewport" content="width=device-width, initial-scale=1"/>
 		<link type="text/css" rel="stylesheet" href="{{ url_for('static', filename='style.css' )}}" ></style>
-		{% block title %}
-		{% endblock %}
+		<title>{% block title %}{% endblock %}</title>
 		{% block style %}
 		{% endblock %}
 		{% block script %}

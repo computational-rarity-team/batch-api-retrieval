@@ -1,14 +1,15 @@
 {% extends 'layout.html' %}
-{% block title %}CSV Display{% endblock%}
+{% block title %}Find Matches{% endblock%}
 
 
 {% block content %}
-<h1>Uploaded Data</h1> 
-{{ data_var|safe }}
+<h1>Discogs and Musicbrainz Results</h1> 
 
-<form action="/show_entries">
-    <input type="submit" value="Find Matches" />
-</form>
+<h3>Musicbrainz Results</h3>
+{{ data_var[0]|safe }}
+
+<h3>Discogs Results</h3>
+{{ data_var[1]|safe }}
 
 {% endblock %}
 

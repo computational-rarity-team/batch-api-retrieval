@@ -1,5 +1,5 @@
 {% extends 'layout.html' %}
-{% block title %} <title>File Uploaded</title> {% endblock%}
+{% block title %}File Uploaded{% endblock%}
 
 
 {% block content %}
@@ -9,7 +9,7 @@
 </form>
 
   <p style="color:green;">file uploaded successfully</p>
-  <form action="/show_data" target="_blank">
+  <form action="/show_data">
         <input type="submit" value="Show CSV" />
     </form>
 {% endblock %}
