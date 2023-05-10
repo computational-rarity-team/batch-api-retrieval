@@ -28,7 +28,7 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 # Define secret key to enable session
 load_dotenv()
 
-app.secret_key = os.environ.get("SECRET_KEY")
+app.secret_key = os.environ.get("USER_TOKEN")
 
 # musicbrainz User Agent Setup
 musicbrainzngs.set_useragent(
@@ -45,7 +45,7 @@ def index():
 
  
 @app.route('/',  methods=("POST", "GET"))
-def uploadFile():
+def upload_file():
     if request.method == 'POST':
         # upload file flask
         uploaded_df = request.files['uploaded-file']
@@ -63,7 +63,7 @@ def uploadFile():
  
 
 @app.route('/show_data')
-def showData():
+def show_data():
     # Retrieving uploaded file path from session
     data_file_path = session.get('uploaded_data_file_path', None)
  
@@ -76,7 +76,7 @@ def showData():
 
 
 @app.route('/check_fields')
-def checkFields():
+def check_fields():
     # Retrieving uploaded file path from session
     data_file_path = session.get('uploaded_data_file_path', None)
  
@@ -91,7 +91,7 @@ def checkFields():
 # then use verified field values to search for each entry in MB and Discogs
 
 @app.route('/show_entries')
-def showEntries():
+def show_entries():
     # Retrieving uploaded file path from session
     data_file_path = session.get('uploaded_data_file_path', None)
 
@@ -120,7 +120,7 @@ def showEntries():
 
 
 @app.route('/find_matches')
-def findMatches():
+def find_matches():
     # Retrieving uploaded file path from session
     data_file_path = session.get('uploaded_data_file_path', None)
  
