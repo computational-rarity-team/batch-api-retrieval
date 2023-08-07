@@ -5,12 +5,46 @@
 {% block content %}
 <h1>Check Fields</h1>
 
-<p>These are the columns of your uploaded CSV, paired with the corresponding parameters for searching the databases:</p>
+<p>These are the fields of your batch processing file which match the Musicbrainz database search fields.</p>
 <ul>
-{% for column in columns %}
-<li>{{ column }}</li>
+{% for field in mb_matches %}
+<li>{{ field }}</li>
 {% endfor %}
 </ul>
+
+<p>These are the fields of your batch processing file which match the Discogs database search fields.</p>
+<ul>
+{% for field in dc_matches %}
+<li>{{ field }}</li>
+{% endfor %}
+</ul>
+
+<p>These are the fields of your batch processing file which do not match any database search fields.</p>
+
+<p>If you like, select a field from the list of fields in your batch CSV which have not already been matched to search fields in the Discogs and Musicbrainz databases.</p>
+
+    <form action="/show_entries" method="POST">
+        <ul>
+        {% for field in non_matches %}
+        <li>{{ field }}
+            <select id={{ field }} name={{ field }}>
+                <option value="no_match" name="no_match">no match</option>
+                {% for option in open_mb_fields %}
+                <option value={{ option }} name={{ option + "," + "mb" + "," + field }}>{{ option }}</option>
+                {% endfor %}
+                {% for option in open_dc_fields %}
+                <option value={{ option + "," + "dc" + "," + field }} name={{ option }}>{{ option }}</option>
+                {% endfor %}
+            </select>
+        </li>
+        {% endfor %}
+        <input type="hidden" name="mb_matches" value="mb_matches" />
+        <input type="hidden" name="dc_matches" value="dc_matches" />
+        <input type="hidden" name="non_matches" value="non_matches" />
+
+</ul>
+    <input type="submit" value="Find Matches" />
+</form>
 
 {% endblock %}
 

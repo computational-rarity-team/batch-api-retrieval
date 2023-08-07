@@ -18,9 +18,9 @@
 
 <h3>Discogs Results</h3>
 <ul>
-{% for result in results[1] %}
-<li><a href="https://discogs.com/release/{{result}}" target="_blank">{{result}}</a></li>
-{% endfor %}
+    {% for result in results[1] %}
+    <li><a href="https://discogs.com/release/{{result}}" target="_blank">{{result}}</a></li>
+    {% endfor %}
 </ul>
 
 {% endblock %}

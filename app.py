@@ -28,7 +28,7 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 # Define secret key to enable session
 load_dotenv()
 
-app.secret_key = os.environ.get("USER_TOKEN")
+app.secret_key = os.environ.get("SECRET_KEY")
 
 # musicbrainz User Agent Setup
 musicbrainzngs.set_useragent(
@@ -83,38 +83,80 @@ def check_fields():
     # read csv file in python flask (reading uploaded csv file from uploaded server location)
     uploaded_df = pd.read_csv(data_file_path)
 
+    # load the fields, compare with existing Musicbrainz and Discogs fields
+    mb_fields = ["alias", "arid", "artist", "artistname", "comment", "creditname", "primarytype", "reid", "release", "releasegroup", "releasegroupaccent", "releases", "rgid", "secondarytype", "status", "tag", "type"]
+    dc_fields = ["type","title","release_title","credit","artist","anv","label","genre","style","country","year","format","catno","barcode","track","submitter","contributor"]
+
     # first check fields of CSV with search params of MB and Discogs
+    mb_matches = [field for field in mb_fields if field in uploaded_df.columns]
+    dc_matches = [field for field in dc_fields if field in uploaded_df.columns]
+    non_matches = [field for field in uploaded_df.columns if field not in mb_fields and field not in dc_fields]
+    open_mb_fields = [field for field in mb_fields if field not in mb_matches]
+    open_dc_fields = [field for field in dc_fields if field not in dc_matches]
+
     # !!!! for this version let's just do artist and title/release
-    return render_template('check_fields.html', column_values = uploaded_df.columns)
+    return render_template('check_fields.html', mb_matches = mb_matches, dc_matches = dc_matches, non_matches = non_matches, open_mb_fields = open_mb_fields, open_dc_fields = open_dc_fields)
 
 
 # then use verified field values to search for each entry in MB and Discogs
 
-@app.route('/show_entries')
+@app.route('/show_entries', methods=['POST'])
 def show_entries():
+    mb_fields = ["alias", "arid", "artist", "artistname", "comment", "creditname", "primarytype", "reid", "release", "releasegroup", "releasegroupaccent", "releases", "rgid", "secondarytype", "status", "tag", "type"]
+    dc_fields = ["type","title","release_title","credit","artist","anv","label","genre","style","country","year","format","catno","barcode","track","submitter","contributor"]
+
     # Retrieving uploaded file path from session
     data_file_path = session.get('uploaded_data_file_path', None)
 
     # read csv file in python flask (reading uploaded csv file from uploaded server location)
     uploaded_df = pd.read_csv(data_file_path)
 
-    # return the entries found
-    # !!!! for this version we'll just return the first entry
-    mbresults = [musicbrainzngs.search_release_groups('\'"'+row[1]+'" AND "'+row[2]+'"\'') for row in uploaded_df.values]
-    dcresults = [d.search(row[2], type='release') for row in uploaded_df.values]
+    # declare empty arrays, non-pythonic, i know
+    mb_results = []
+    dc_results = []
 
-    # grab just the first entry of each row
-    mbresult = [row['release-group-list'][0]['id'] if len(row['release-group-list']) > 0 else 'not found' for row in mbresults]
-    dcresult = [row[0].id for row in dcresults]
+    if request.method == 'POST':
+        # get user input using request
+        mb_matches = request.form['mb_matches']
+        dc_matches = request.form['dc_matches']
+        # get each user field matched
+        new_fields = [request.form[field] for field in request.form['non_matches'] if field != "no_match"]
 
-    # each entry should be formatted clearly and have a link
-    # to its entry on MB and Discogs respectively
-    # !!!! for this version let's start with just a link
+        for entry in uploaded_df:
+            # make new arrays with "correct" columns for mb and dc
+            mb_terms = dict(zip(mb_fields, [None]*len(mb_fields)))
+            dc_terms = dict(zip(dc_fields, [None]*len(dc_fields)))
+
+            # populate arrays with the given values
+            for field in mb_matches:
+                mb_terms[field] = entry[field]
+            for field in dc_matches:
+                dc_terms[field] = entry[field]
+            for field in new_fields:
+                field_vals = field.split(',')
+                if (field_vals[1] == 'mb'):
+                    mb_terms[field_vals[0]] = entry[field_vals[2]]
+                else:
+                    dc_terms[field_vals[0]] = entry[field_vals[2]]
+
+            # create new data frames from dictionaries
+            mb_query = pd.DataFrame(data=mb_terms)
+            dc_query = pd.DataFrame(data=dc_terms)
+
+            # search by each entry
+        
+            mb_results.append(musicbrainzngs.search_release_groups(alias=mb_query['alias'], arid=mb_query['arid'], artist=mb_query['artist'], artistname=mb_query['artistname'], comment=mb_query['comment'], creditname=mb_query['creditname'], primarytype=mb_query['primarytype'], reid=mb_query['reid'], release=mb_query['release'], releasegroup=mb_query['releasegroup'], releasegroupaccent=mb_query['releasegroupaccent'], releases=mb_query['releases'], rgid=mb_query['rgid'], secondarytype=mb_query['secondarytype'], status=mb_query['status'], tag=mb_query['tag'], type=mb_query['type']))
+            dc_results.append(d.search(type=dc_query['type'],title=dc_query['title'],release_title=dc_query['release_title'],credit=dc_query['credit'],artist=dc_query['artist'],anv=dc_query['anv'],label=dc_query['label'],genre=dc_query['genre'],style=dc_query['style'],country=dc_query['country'],year=dc_query['year'],format=dc_query['format'],catno=dc_query['catno'],barcode=dc_query['barcode'],track=dc_query['track'],submitter=dc_query['submitter'],contributer=dc_query['contributor']))
+
+
+        # grab just the first entry of each row
+        mb_result = [row['release-group-list'][0]['id'] if len(row['release-group-list']) > 0 else 'not found' for row in mb_results]
+        dc_result = [row[0].id for row in dc_results]
 
     # the results should also be available as a downloadable CSV
     # !!!! for this version let's get this going only if it feels necessary
 
-    results_list = (mbresult, dcresult)
+    results_list = (mb_result, dc_result)
 
     return render_template('show_entries.html', results = results_list)
 
@@ -133,6 +175,7 @@ def find_matches():
     # perhaps we should give the user the option to browse each result as it comes in!
     # also depending on the columns included in the csv, we should search for each one
     mbresults = [musicbrainzngs.search_release_groups('\'"'+row[1]+'" AND "'+row[2]+'"\'') for row in uploaded_df.values]
+    #mbresults = [musicbrainzngs.search_release_groups()]
     # for now let's just search using the title
     dcresults = [d.search(row[2], type='release') for row in uploaded_df.values]
 
