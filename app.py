@@ -100,7 +100,7 @@ def check_fields():
 
 # then use verified field values to search for each entry in MB and Discogs
 
-@app.route('/show_entries', methods=['POST'])
+@app.route('/show_entries')
 def show_entries():
     mb_fields = ["alias", "arid", "artist", "artistname", "comment", "creditname", "primarytype", "reid", "release", "releasegroup", "releasegroupaccent", "releases", "rgid", "secondarytype", "status", "tag", "type"]
     dc_fields = ["type","title","release_title","credit","artist","anv","label","genre","style","country","year","format","catno","barcode","track","submitter","contributor"]
@@ -144,19 +144,18 @@ def show_entries():
             dc_query = pd.DataFrame(data=dc_terms)
 
             # search by each entry
-        
-            mb_results.append(musicbrainzngs.search_release_groups(alias=mb_query['alias'], arid=mb_query['arid'], artist=mb_query['artist'], artistname=mb_query['artistname'], comment=mb_query['comment'], creditname=mb_query['creditname'], primarytype=mb_query['primarytype'], reid=mb_query['reid'], release=mb_query['release'], releasegroup=mb_query['releasegroup'], releasegroupaccent=mb_query['releasegroupaccent'], releases=mb_query['releases'], rgid=mb_query['rgid'], secondarytype=mb_query['secondarytype'], status=mb_query['status'], tag=mb_query['tag'], type=mb_query['type']))
-            dc_results.append(d.search(type=dc_query['type'],title=dc_query['title'],release_title=dc_query['release_title'],credit=dc_query['credit'],artist=dc_query['artist'],anv=dc_query['anv'],label=dc_query['label'],genre=dc_query['genre'],style=dc_query['style'],country=dc_query['country'],year=dc_query['year'],format=dc_query['format'],catno=dc_query['catno'],barcode=dc_query['barcode'],track=dc_query['track'],submitter=dc_query['submitter'],contributer=dc_query['contributor']))
-
-
+            #mb_results.append(musicbrainzngs.search_release_groups(alias=mb_query['alias'], arid=mb_query['arid'], artist=mb_query['artist'], artistname=mb_query['artistname'], comment=mb_query['comment'], creditname=mb_query['creditname'], primarytype=mb_query['primarytype'], reid=mb_query['reid'], release=mb_query['release'], releasegroup=mb_query['releasegroup'], releasegroupaccent=mb_query['releasegroupaccent'], releases=mb_query['releases'], rgid=mb_query['rgid'], secondarytype=mb_query['secondarytype'], status=mb_query['status'], tag=mb_query['tag'], type=mb_query['type']))
+            #dc_results.append(d.search(type=dc_query['type'],title=dc_query['title'],release_title=dc_query['release_title'],credit=dc_query['credit'],artist=dc_query['artist'],anv=dc_query['anv'],label=dc_query['label'],genre=dc_query['genre'],style=dc_query['style'],country=dc_query['country'],year=dc_query['year'],format=dc_query['format'],catno=dc_query['catno'],barcode=dc_query['barcode'],track=dc_query['track'],submitter=dc_query['submitter'],contributer=dc_query['contributor']))
+            
         # grab just the first entry of each row
-        mb_result = [row['release-group-list'][0]['id'] if len(row['release-group-list']) > 0 else 'not found' for row in mb_results]
-        dc_result = [row[0].id for row in dc_results]
+        #mb_result = [row['release-group-list'][0]['id'] if len(row['release-group-list']) > 0 else 'not found' for row in mb_results]
+        #dc_result = [row[0].id for row in dc_results]
 
     # the results should also be available as a downloadable CSV
     # !!!! for this version let's get this going only if it feels necessary
 
-    results_list = (mb_result, dc_result)
+    #results_list = (mb_result, dc_result)
+    results_list = (mb_query, dc_query)
 
     return render_template('show_entries.html', results = results_list)
 
@@ -175,9 +174,14 @@ def find_matches():
     # perhaps we should give the user the option to browse each result as it comes in!
     # also depending on the columns included in the csv, we should search for each one
     mbresults = [musicbrainzngs.search_release_groups('\'"'+row[1]+'" AND "'+row[2]+'"\'') for row in uploaded_df.values]
-    #mbresults = [musicbrainzngs.search_release_groups()]
+    #mbresults = [musicbrainzngs.search_release_groups(artist=artistValue, )]
     # for now let's just search using the title
     dcresults = [d.search(row[2], type='release') for row in uploaded_df.values]
+
+    # let's get results based on the fields we checked
+    # first build the query as a string
+    #dcquery = []
+    #dcresults = [d.search(dcquery) for row in uploaded_df.values]
 
     the_results = (mbresults, dcresults)
 

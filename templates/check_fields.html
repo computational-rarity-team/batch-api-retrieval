@@ -23,28 +23,28 @@
 
 <p>If you like, select a field from the list of fields in your batch CSV which have not already been matched to search fields in the Discogs and Musicbrainz databases.</p>
 
-    <form action="/show_entries" method="POST">
+    <form action="/show_entries">
         <ul>
-        {% for field in non_matches %}
-        <li>{{ field }}
-            <select id={{ field }} name={{ field }}>
-                <option value="no_match" name="no_match">no match</option>
-                {% for option in open_mb_fields %}
-                <option value={{ option }} name={{ option + "," + "mb" + "," + field }}>{{ option }}</option>
-                {% endfor %}
-                {% for option in open_dc_fields %}
-                <option value={{ option + "," + "dc" + "," + field }} name={{ option }}>{{ option }}</option>
-                {% endfor %}
-            </select>
-        </li>
-        {% endfor %}
-        <input type="hidden" name="mb_matches" value="mb_matches" />
-        <input type="hidden" name="dc_matches" value="dc_matches" />
-        <input type="hidden" name="non_matches" value="non_matches" />
+            {% for field in non_matches %}
+            <li>{{ field }}
+                <select id={{ field }} name={{ field }}>
+                    <option value="no_match" name="no_match">no match</option>
+                    {% for option in open_mb_fields %}
+                    <option value={{ option }} name={{ option + "," + "mb" + "," + field }}>{{ option }}</option>
+                    {% endfor %}
+                    {% for option in open_dc_fields %}
+                    <option value={{ option + "," + "dc" + "," + field }} name={{ option }}>{{ option }}</option>
+                    {% endfor %}
+                </select>
+            </li>
+            {% endfor %}
 
-</ul>
-    <input type="submit" value="Find Matches" />
-</form>
+        </ul>
+        <input type="hidden" name="mb_matches" value={{mb_matches}} />
+        <input type="hidden" name="dc_matches" value={{dc_matches}} />
+        <input type="hidden" name="non_matches" value={{non_matches}} />
+        <input type="submit" value="Find Matches" />
+    </form>
 
 {% endblock %}
 
