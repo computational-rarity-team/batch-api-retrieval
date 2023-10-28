@@ -1,0 +1,24 @@
+{% extends 'layout.html' %}
+{% block title %}Batch Material Retrieval{% endblock%}
+
+
+{% block content %}
+<h1>Please upload a CSV file</h1>
+
+<form method="POST" enctype="multipart/form-data" action="/">
+	<input type="file" id="myFile" name="uploaded-file" accept=".csv">
+	<input type="submit" value="Upload file">
+</form>
+<br>
+<p style="color:blue;">Choose CSV file to upload</p>
+<form action="/show_data">
+	<input type="submit" value="Show CSV" />
+</form>
+
+{% endblock %}
+
+{% block footer %}
+<footer>created 2023 by the <a href="https://github.com/computational-rarity-team" target="_blank">Computational Rarity Team</a></footer>
+{% endblock %}
+
+{% block script %} <script type="text/javascript"> window.onload = () => console.log('Document ready!'); </script> {% endblock %}

@@ -1,18 +1,21 @@
 {% extends 'layout.html' %}
-{% block title %}Batch Material Retrieval{% endblock%}
-
+{% block title %}Test that API{% endblock%}
 
 {% block content %}
-<h1>Please upload a CSV file</h1>
+<h1>Test the API Calls</h1>
 
-<form method="POST" enctype="multipart/form-data" action="/">
-	<input type="file" id="myFile" name="uploaded-file" accept=".csv">
-	<input type="submit" value="Upload file">
-</form>
-<br>
-<p style="color:blue;">Choose CSV file to upload</p>
-<form action="/show_data">
-	<input type="submit" value="Show CSV" />
+<form action="send_data">
+	<label for="title">Title</label>
+	<input type="text" name="title" id="title">
+	<label for="name">Artist Name</label>
+	<input type="text" name="name" id="name">
+	<label for="description">Description</label>
+	<input type="text" name="description" id="description">
+
+	<div id="myDiv"></div>
+	<p style="color:blue;">Push the Button to test the API Call with the given data</p>
+	<input type="submit" value="Call to Musicbrainz" onclick="return callMB()" />
+	<input type="submit" value="Call to Discogs" onclick="return callDC()"/>
 </form>
 
 {% endblock %}
@@ -21,4 +24,5 @@
 <footer>created 2023 by the <a href="https://github.com/computational-rarity-team" target="_blank">Computational Rarity Team</a></footer>
 {% endblock %}
 
-{% block script %} <script type="text/javascript"> window.onload = () => console.log('Document ready!'); </script> {% endblock %}
+{% block script %} <script type="text/javascript"> window.onload = () => console.log('Document ready!'); </script>
+					<script src="{{ url_for('static', filename='scripts.js' )}}"></script> {% endblock %}

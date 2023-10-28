@@ -1,5 +1,5 @@
 # flask imports
-from flask import Flask, render_template, request, session
+from flask import Flask, render_template, request, session, jsonify
 # misc system imports
 import os
 import urllib3
@@ -182,6 +182,13 @@ def find_matches():
     the_results = (mbresults, dcresults)
 
     return render_template('find_matches.html', data_var = the_results)
+
+@app.route('/ajax', methods = ['POST'])
+def ajax_request():
+    title = request.form['title']
+    name = request.form['name']
+    description = request.form['description']
+    return jsonify(title=title,name=name,description=description)
 
 
 if __name__ == '__main__':
