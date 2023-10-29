@@ -1,7 +1,7 @@
 # flask imports
 from flask import Flask, render_template, request, session
 # misc system imports
-import os
+import os, sys
 import urllib3
 # music DB API imports
 import musicbrainzngs
@@ -74,32 +74,61 @@ def show_data():
     uploaded_df_html = uploaded_df.to_html()
     return render_template('show_data.html', data_var = uploaded_df_html)
 
-
-@app.route('/check_fields')
-def check_fields():
+# then use verified field values to search for each entry on Discogs
+@app.route('/get_options')
+def get_options():
     # Retrieving uploaded file path from session
     data_file_path = session.get('uploaded_data_file_path', None)
  
     # read csv file in python flask (reading uploaded csv file from uploaded server location)
     uploaded_df = pd.read_csv(data_file_path)
 
-    # load the fields, compare with existing Musicbrainz and Discogs fields
-    mb_fields = ["alias", "arid", "artist", "artistname", "comment", "creditname", "primarytype", "reid", "release", "releasegroup", "releasegroupaccent", "releases", "rgid", "secondarytype", "status", "tag", "type"]
-    dc_fields = ["type","title","release_title","credit","artist","anv","label","genre","style","country","year","format","catno","barcode","track","submitter","contributor"]
+    # load the pre-formatted field names for the headers
+    the_fields = ["catno", "artist", "title", "label", "format", "year", "release_id"]
 
-    # first check fields of CSV with search params of MB and Discogs
-    mb_matches = [field for field in mb_fields if field in uploaded_df.columns]
-    dc_matches = [field for field in dc_fields if field in uploaded_df.columns]
-    non_matches = [field for field in uploaded_df.columns if field not in mb_fields and field not in dc_fields]
-    open_mb_fields = [field for field in mb_fields if field not in mb_matches]
-    open_dc_fields = [field for field in dc_fields if field not in dc_matches]
+    # to populate the fields properly, we'll have to combine the artist fields, stripping any spaces
+    # first make a new array to fill with the new artist values
+    combined_artists = []
+    # then fill that array with the new artist values
+    for entry,row in uploaded_df.iterrows():
+        #print(str(row['artist_first']),file=sys.stderr)
+        #print(str(row['artist_last']),file=sys.stderr)
+        if isinstance(row['artist_first'], str) and isinstance(row['artist_last'], str):
+            combined_artists.append(row['artist_first']+' '+row['artist_last'])
+        else:
+            if row['artist_first'] and not row['artist_last']:
+                combined_artists.append(row['artist_first'])
+            elif not row['artist_first'] and row['artist_last']:
+                combined_artists.append(row['artist_last'])
+            else:
+                combined_artists.append('')
+            
+    # then create a new dataframe with the combined artist array as a column replacing the other two
+    new_dict = dict(zip([None]*len(the_fields), the_fields))
+    # create a dictionary
+    field_list = [[row[field] if field != 'artist' else combined_artists[num] for field in the_fields] for num,row in uploaded_df.iterrows()]*len(the_fields)
+    #print(field_list)
+    field_list = pd.DataFrame(field_list).T.values.tolist()
+    #[[dist_fields[num].append(field) for num,field in entry] for entry in field_list]
+    #[[print(field) for field in entry] for entry in field_list]
+    new_dict = dict(zip(the_fields, field_list))
 
-    # !!!! for this version let's just do artist and title/release
-    return render_template('check_fields.html', mb_matches = mb_matches, dc_matches = dc_matches, non_matches = non_matches, open_mb_fields = open_mb_fields, open_dc_fields = open_dc_fields)
+    print(new_dict)
 
+    # create new data frames from dictionary
+    new_df = pd.DataFrame(data=new_dict)
+
+    #print(new_df)
+
+    #search each entry on discogs, show results, let user select most accurate one
+    the_results = []
+    for num,entry in new_df.iterrows():
+        the_results.append(d.search(catno=entry['catno'],artist=entry['artist'],title=entry['title'],label=entry['label'],format=entry['format'],year=entry['year'],release_id=entry['release_id']))
+    print(the_results[0])
+    final_results = []
+    return render_template('get_options.html', results = the_results)
 
 # then use verified field values to search for each entry in MB and Discogs
-
 @app.route('/show_entries')
 def show_entries():
     mb_fields = ["alias", "arid", "artist", "artistname", "comment", "creditname", "primarytype", "reid", "release", "releasegroup", "releasegroupaccent", "releases", "rgid", "secondarytype", "status", "tag", "type"]

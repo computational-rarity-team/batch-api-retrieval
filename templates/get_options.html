@@ -1,22 +1,17 @@
 {% extends 'layout.html' %}
-{% block title %}CSV Display{% endblock%}
+{% block title %}Get Options{% endblock%}
 
 
 {% block content %}
-<h1>Uploaded Data</h1> 
-{{ data_var|safe }}
+<h1>Discogs Results</h1> 
+<dl>
+{% for entry in results %}
+<dt>{{ entry }}</dt>
+<dd>
+    <li><a href="https://discogs.com/release/{{entry}}" target="_blank">{{entry}}</a></li>
+</dd>
+{% endfor %}
 
-<!--<form action="/show_entries">
-    <input type="submit" value="Find Matches" />
-</form>-->
-<!--
-<form action="/check_fields">
-    <input type="submit" value="Check Fields" />
-</form>
--->
-<form action="/get_options">
-    <input type="submit" value="Get Options" />
-</form>
 {% endblock %}
 
 {% block footer %}
