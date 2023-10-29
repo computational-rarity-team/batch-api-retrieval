@@ -6,9 +6,17 @@
 <h1>Discogs Results</h1> 
 <dl>
 {% for entry in results %}
-<dt>{{ entry }}</dt>
+<dt>{{ entries[loop.index] }}</dt>
 <dd>
-    <li><a href="https://discogs.com/release/{{entry}}" target="_blank">{{entry}}</a></li>
+    {% if entry|length > 0 %}
+        <ul>
+        {% for result in entry %}
+            <li><a href="https://discogs.com/release/{{ result }}" target="_blank">Discogs ID: {{ result }}</a></li>
+        {% endfor %}
+        </ul>
+    {% else %}
+        <p>No results found for {{ entries[loop.index] }} in Discogs, perhaps try removing unnecessary text?</p>            
+    {% endif %}
 </dd>
 {% endfor %}
 

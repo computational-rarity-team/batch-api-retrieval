@@ -28,7 +28,7 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 # Define secret key to enable session
 load_dotenv()
 
-app.secret_key = os.environ.get("SECRET_KEY")
+app.secret_key = os.environ.get("USER_TOKEN")
 
 # musicbrainz User Agent Setup
 musicbrainzngs.set_useragent(
@@ -106,7 +106,7 @@ def get_options():
     # then create a new dataframe with the combined artist array as a column replacing the other two
     new_dict = dict(zip([None]*len(the_fields), the_fields))
     # create a dictionary
-    field_list = [[row[field] if field != 'artist' else combined_artists[num] for field in the_fields] for num,row in uploaded_df.iterrows()]*len(the_fields)
+    field_list = [[row[field] if field != 'artist' else combined_artists[num] for field in the_fields] for num,row in uploaded_df.iterrows()]
     #print(field_list)
     field_list = pd.DataFrame(field_list).T.values.tolist()
     #[[dist_fields[num].append(field) for num,field in entry] for entry in field_list]
@@ -122,11 +122,23 @@ def get_options():
 
     #search each entry on discogs, show results, let user select most accurate one
     the_results = []
+    the_entries = []
     for num,entry in new_df.iterrows():
-        the_results.append(d.search(catno=entry['catno'],artist=entry['artist'],title=entry['title'],label=entry['label'],format=entry['format'],year=entry['year'],release_id=entry['release_id']))
-    print(the_results[0])
-    final_results = []
-    return render_template('get_options.html', results = the_results)
+        d_query = ""
+        for field in the_fields:
+            if isinstance(entry[field], str):
+                d_query += field+"="+entry[field]+","
+        this_entry = entry['title']+" - "+entry['artist']
+        this_result = d.search(d_query)
+        if (len(this_result) > 0):
+            result_ids = [result.id for result in this_result]
+            the_results.append(result_ids)
+        else:
+            #the_results.append("no results found on Discogs")
+            the_results.append("")
+        the_entries.append(this_entry)
+    #print(the_results)
+    return render_template('get_options.html', results = the_results, entries = the_entries)
 
 # then use verified field values to search for each entry in MB and Discogs
 @app.route('/show_entries')
