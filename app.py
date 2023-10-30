@@ -28,7 +28,9 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 # Define secret key to enable session
 load_dotenv()
 
-app.secret_key = os.environ.get("USER_TOKEN")
+app.user_token = os.environ.get("USER_TOKEN")
+app.cons_key = os.environ.get("CONSUME_KEY")
+app.cons_secret = os.environ.get("CONSUME_SECRET")
 
 # musicbrainz User Agent Setup
 musicbrainzngs.set_useragent(
@@ -36,8 +38,12 @@ musicbrainzngs.set_useragent(
     "0.1",
     "https://github.com/computational-rarity-team/batch-api-retrieval/",
 )
-d = discogs_client.Client('ExampleApplication/0.1', user_token=app.secret_key)
-
+#d = discogs_client.Client('computational-rarity-test/1.0', user_token=app.user_token)
+d = discogs_client.Client(
+    'computational-rarity-batch/1.0',
+    consumer_key=app.cons_key,
+    consumer_secret=app.cons_secret
+)
 
 @app.route('/')
 def index():
