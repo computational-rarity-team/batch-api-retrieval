@@ -6,7 +6,7 @@
 <h1>Discogs Results</h1> 
 
 
-<form action="/custom_search" method="post">
+<form action="/get_options.html">
 
     <dl>
         
@@ -22,22 +22,21 @@
                 <ul>
                     <li>No entries found, would you like to <a href="search_further?num={{ entry }}">search further automatically</a>?</li>
                 </ul>
+            {% endif %}
+            {% if entry|length > 0 %}
+                <ul>
+                {% for result in entry %}
+                    <li>
+                        <a href="https://discogs.com/release/{{ result }}" target="_blank">Discogs ID: {{ result }}</a>
+                        <h2>{{ titles[loop.index] }}</h2>
+                        <h3>{{ artists[loop.index] }}</h3>
+                        <h4>{{ years[loop.index] }}</h4>
+                        <img src="{{ images[loop.index] }}" style="max-height: 75px;"/>
+                    </li>
+                {% endfor %}
+                </ul>
             {% else %}
-                {% if entry|length > 0 %}
-                    <ul>
-                    {% for result in entry %}
-                        <li>
-                            <a href="https://discogs.com/release/{{ result }}" target="_blank">Discogs ID: {{ result }}</a>
-                            <h2>{{ titles[loop.index] }}</h2>
-                            <h3>{{ artists[loop.index] }}</h3>
-                            <h4>{{ years[loop.index] }}</h4>
-                            <img src="{{ images[loop.index] }}" style="max-height: 75px;"/>
-                        </li>
-                    {% endfor %}
-                    </ul>
-                {% else %}
-                    <p>No entries found for {{ entries[loop.index] }}, perhaps your CSV is incorrectly formatted?</p>
-                {% endif %}
+                <p>No entries found for {{ entries[loop.index] }}, perhaps your CSV is incorrectly formatted?</p>
             {% endif %}
         {% endif %}
             <p>Pick a more specific search term for the next batch process:</p>

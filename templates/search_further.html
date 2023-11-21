@@ -1,0 +1,33 @@
+{% extends 'layout.html' %}
+{% block title %}Search Further{% endblock%}
+
+
+{% block content %}
+<h1>Discogs Results</h1> 
+<dl>
+<dt>{{ entry }}</dt>
+<dd>
+    {% if results|length > 0 %}
+        <ul>
+        {% for item in results %}
+            <li>
+                <h2>{{ titles[loop.index] }}</h2>
+                <h3>{{ artists[loop.index] }}</h3>
+                <h4>{{ years[loop.index] }}</h4>
+                <img src="{{ images[loop.index] }}" style="max-height: 75px;"/>
+                <p><a href="https://discogs.com/release/{{ item }}" target="_blank">Discogs ID: {{ item }}</a></p>
+            </li>
+        {% endfor %}
+        </ul>
+    {% else %}
+        <p>No results found for {{ entry }} in Discogs, perhaps try removing unnecessary text in the CSV?</p>            
+    {% endif %}
+</dd>
+
+{% endblock %}
+
+{% block footer %}
+<footer>created 2023 by the <a href="https://github.com/computational-rarity-team" target="_blank">Computational Rarity Team</a></footer>
+{% endblock %}
+
+{% block script %} <script type="text/javascript"> window.onload = () => console.log('Document ready!'); </script> {% endblock %}

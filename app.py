@@ -1,8 +1,8 @@
 # flask imports
 from flask import Flask, render_template, request, session
 # misc system imports
-import os, sys
-import urllib3
+import os
+import requests
 # music DB API imports
 import musicbrainzngs
 import discogs_client
@@ -28,9 +28,7 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 # Define secret key to enable session
 load_dotenv()
 
-app.user_token = os.environ.get("USER_TOKEN")
-app.cons_key = os.environ.get("CONSUME_KEY")
-app.cons_secret = os.environ.get("CONSUME_SECRET")
+app.secret_key = os.environ.get("CONSUME_SECRET")
 
 # musicbrainz User Agent Setup
 musicbrainzngs.set_useragent(
@@ -38,12 +36,14 @@ musicbrainzngs.set_useragent(
     "0.1",
     "https://github.com/computational-rarity-team/batch-api-retrieval/",
 )
-#d = discogs_client.Client('computational-rarity-test/1.0', user_token=app.user_token)
-d = discogs_client.Client(
-    'computational-rarity-batch/1.0',
-    consumer_key=app.cons_key,
-    consumer_secret=app.cons_secret
-)
+d = discogs_client.Client('computational-rarity-test/1.0', user_token=os.environ.get("USER_TOKEN"))
+#d = discogs_client.Client(
+#    'computational-rarity-batch/1.0',
+#    consumer_key=os.environ.get("CONSUME_KEY"),
+#    consumer_secret=os.environ.get("CONSUME_SECRET")
+#)
+
+the_frame = pd.DataFrame()
 
 @app.route('/')
 def index():
@@ -119,32 +119,106 @@ def get_options():
     #[[print(field) for field in entry] for entry in field_list]
     new_dict = dict(zip(the_fields, field_list))
 
-    print(new_dict)
+    #print(new_dict)
 
     # create new data frames from dictionary
     new_df = pd.DataFrame(data=new_dict)
+    global the_frame
+    the_frame = new_df.copy()
 
     #print(new_df)
 
     #search each entry on discogs, show results, let user select most accurate one
     the_results = []
     the_entries = []
-    for num,entry in new_df.iterrows():
+    the_titles = []
+    the_artists = []
+    the_years = []
+    the_images = []
+    # even though we don't use it, the "num" in the for call below is necessary!!!!
+    for num,entry in the_frame.iterrows():
         d_query = ""
         for field in the_fields:
             if isinstance(entry[field], str):
                 d_query += field+"="+entry[field]+","
         this_entry = entry['title']+" - "+entry['artist']
-        this_result = d.search(d_query)
-        if (len(this_result) > 0):
-            result_ids = [result.id for result in this_result]
-            the_results.append(result_ids)
+        the_results = ['test'] * 25
+        this_result = d.search(d_query,type="release")
+        
+        if (len(this_result) > 0 and len(this_result) < 25):
+            for item in this_result:
+                the_titles.append(item.title)
+                the_artists.append(item.artists[0].name)
+                the_years.append(item.year)
+                if item.images is not None: the_images.append(item.images[0]['resource_url'])
+                the_results.append(item.id)
+        elif (len(this_result) >= 25):
+            count = 0
+            for item in this_result:
+                the_results.append(item.id)
+                the_titles.append(item.title)
+                the_artists.append(item.artists[0].name)
+                the_years.append(item.year)
+                if item.images is not None: the_images.append(item.images[0]['resource_url'])
+                count += 1
+                if count > 24: break
         else:
-            #the_results.append("no results found on Discogs")
-            the_results.append("")
+            the_results.append(str(num))
         the_entries.append(this_entry)
     #print(the_results)
-    return render_template('get_options.html', results = the_results, entries = the_entries)
+    return render_template('get_options.html', results = the_results, entries = the_entries, titles = the_titles, artists = the_artists, years = the_years, images = the_images)
+
+@app.route('/custom_search', methods=['POST'])
+def custom_search():
+    if request.method == 'POST':
+        print(request.arts.get())
+
+@app.route('/search_further', methods=['GET'])
+def search_further():
+    if request.method == 'GET':
+        global the_frame
+
+        num = request.args.get("num")
+
+        # load the pre-formatted field names for the headers
+        the_fields = ["catno", "artist", "title", "label", "format", "year", "release_id"]
+
+        entry = the_frame.iloc[int(num), :]
+        print(entry)
+        this_entry = entry['title']+" - "+entry['artist']
+        print(entry['title'])
+        
+        d_query = ""
+        the_titles = []
+        the_artists = []
+        the_years = []
+        the_images = []
+        ind_ids = []
+        ind_results = []
+        for field in the_fields:
+            if isinstance(entry[field], str):
+                if field == 'title':
+                    #print(entry['title'])
+                    result = d.search(entry['title'],type="release")
+                    #print(len(result))
+                    if len(result) > 0:  
+                        if len(result) < 2:
+                            ind_results.append(result)
+                            the_titles.append(result.title)
+                            the_artists.append(result.artists[0].name)
+                            the_years.append(result.year)
+                            the_images.append(result.images[0]['resource_url'])
+                        else:
+                            for item in result:
+                                ind_results.append(item)
+                                the_titles.append(item.title)
+                                the_artists.append(item.artists[0].name)
+                                the_years.append(item.year)
+                                if item.images is not None: the_images.append(item.images[0]['resource_url'])
+                    print(ind_results)
+        if len(ind_results) > 0:
+            ind_ids = [result.id for result in ind_results]
+    return render_template('search_further.html', results = ind_ids, entry = this_entry, titles = the_titles, artists = the_artists, years = the_years, images = the_images)
 
 # then use verified field values to search for each entry in MB and Discogs
 @app.route('/show_entries')
@@ -238,3 +312,66 @@ def find_matches():
 if __name__ == '__main__':
     app.run(debug=True)
     
+
+
+
+
+
+def cache_code():
+    import feedparser
+    import requests
+    import ssl
+    import time
+
+    from functools import lru_cache, wraps
+    from datetime import datetime, timedelta
+
+    if hasattr(ssl, "_create_unverified_context"):
+        ssl._create_default_https_context = ssl._create_unverified_context
+
+    def timed_lru_cache(seconds: int, maxsize: int = 128):
+        def wrapper_cache(func):
+            func = lru_cache(maxsize=maxsize)(func)
+            func.lifetime = timedelta(seconds=seconds)
+            func.expiration = datetime.utcnow() + func.lifetime
+
+            @wraps(func)
+            def wrapped_func(*args, **kwargs):
+                if datetime.utcnow() >= func.expiration:
+                    func.cache_clear()
+                    func.expiration = datetime.utcnow() + func.lifetime
+
+                return func(*args, **kwargs)
+
+            return wrapped_func
+
+        return wrapper_cache
+
+    @timed_lru_cache(10)
+    def get_article_from_server(url):
+        print("Fetching article from server...")
+        response = requests.get(url)
+        return response.text
+
+    def monitor(url):
+        maxlen = 45
+        while True:
+            print("\nChecking feed...")
+            feed = feedparser.parse(url)
+
+            for entry in feed.entries[:5]:
+                if "python" in entry.title.lower():
+                    truncated_title = (
+                        entry.title[:maxlen] + "..."
+                        if len(entry.title) > maxlen
+                        else entry.title
+                    )
+                    print(
+                        "Match found:",
+                        truncated_title,
+                        len(get_article_from_server(entry.link)),
+                    )
+
+            time.sleep(5)
+
+    monitor("https://realpython.com/atom.xml")
