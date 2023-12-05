@@ -15,6 +15,14 @@ To use the batch retrieval tool, create a CSV with the minimum required fields a
 
 The output can be downloaded as a CSV or viewed on the page.
 
+# current ISSUES
+
+- Discogs API a bit confusing
+- Musicbrainz even more so
+- how to show each release in a batch as a dynamic page
+  - figure out system for users to confirm matches
+  - figure out system for users to perform searches
+
 ## appendix
 
 ### Musicbrainz API with musicbrainzngs
