@@ -15,7 +15,7 @@ To use the batch retrieval tool, create a CSV with the minimum required fields a
 
 The output can be downloaded as a CSV or viewed on the page.
 
-# current ISSUES
+# current ISSUES 🥅 🐐
 
 - Discogs API a bit confusing
 - Musicbrainz even more so
@@ -45,7 +45,7 @@ Below are some very helpful search functions in `musicbrainzngs` which we can us
 >Available search fields: alias, arid, artist, artistname, comment, creditname, primarytype, reid, release, releasegroup, releasegroupaccent, releases, rgid, secondarytype, status, tag, type
 
 `musicbrainzngs.search_releases(query='', limit=None, offset=None, strict=False, **fields)`
-*Search for recordings and return a dict with a ‘recording-list’ key.*
+*Search for recordings and return a dict with a ‘release-list’ key.*
 
 >Available search fields: alias, arid, artist, artistname, asin, barcode, catno, comment, country, creditname, date, discids, discidsmedium, format, label, laid, lang, mediums, primarytype, quality, reid, release, releaseaccent, rgid, script, secondarytype, status, tag, tracks, tracksmedium, type
 
