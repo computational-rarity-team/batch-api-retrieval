@@ -1,20 +1,12 @@
 {% extends 'layout.html' %}
-{% block title %}CSV Display{% endblock%}
+{% block title %}Row {{rowno}}{% endblock%}
 
 
 {% block content %}
-<h1>Uploaded Data</h1> 
-{{ data_var|safe }}
 
-<!--<form action="/show_entries">
-    <input type="submit" value="Find Matches" />
-</form>
-<form action="/check_fields">
-    <input type="submit" value="Check Fields" />
-</form>-->
-<form action="/each_row">
-    <input type="submit" value="Check Each Row" />
-</form>
+<p>Row {{rowno}}</p>
+
+<a href="/">Next Page</a>
 
 {% endblock %}
 

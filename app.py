@@ -28,7 +28,8 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 # Define secret key to enable session
 load_dotenv()
 
-app.secret_key = os.environ.get("SECRET_KEY")
+#app.secret_key = os.environ.get("SECRET_KEY")
+app.secret_key = os.environ.get("USER_TOKEN")
 
 # musicbrainz User Agent Setup
 musicbrainzngs.set_useragent(
@@ -39,9 +40,23 @@ musicbrainzngs.set_useragent(
 d = discogs_client.Client('ExampleApplication/0.1', user_token=app.secret_key)
 
 
+#@app.route('/')
+#def index():
+#    return render_template('index.html')
+
+pages = [1,2,3,4]
+count = 0
+
 @app.route('/')
 def index():
-    return render_template('index.html')
+    global count
+    global pages
+    if count < len(pages):
+        count += 1
+    else:
+        count = 1
+    return render_template('one_page.html', rowno = pages[count-1])
+
 
  
 @app.route('/',  methods=("POST", "GET"))
@@ -73,6 +88,93 @@ def show_data():
     # pandas dataframe to html table flask
     uploaded_df_html = uploaded_df.to_html()
     return render_template('show_data.html', data_var = uploaded_df_html)
+
+@app.route('/get_options')
+def get_options():
+    # Retrieving uploaded file path from session
+    data_file_path = session.get('uploaded_data_file_path', None)
+ 
+    # read csv file in python flask (reading uploaded csv file from uploaded server location)
+    uploaded_df = pd.read_csv(data_file_path)
+
+    # load the pre-formatted field names for the headers
+    the_fields = ["catno", "artist", "title", "label", "format", "year", "release_id"]
+
+    # to populate the fields properly, we'll have to combine the artist fields, stripping any spaces
+    # first make a new array to fill with the new artist values
+    combined_artists = []
+    # then fill that array with the new artist values
+    for entry,row in uploaded_df.iterrows():
+        #print(str(row['artist_first']),file=sys.stderr)
+        #print(str(row['artist_last']),file=sys.stderr)
+        if isinstance(row['artist_first'], str) and isinstance(row['artist_last'], str):
+            combined_artists.append(row['artist_first']+' '+row['artist_last'])
+        else:
+            if row['artist_first'] and not row['artist_last']:
+                combined_artists.append(row['artist_first'])
+            elif not row['artist_first'] and row['artist_last']:
+                combined_artists.append(row['artist_last'])
+            else:
+                combined_artists.append('')
+            
+    # then create a new dataframe with the combined artist array as a column replacing the other two
+    new_dict = dict(zip([None]*len(the_fields), the_fields))
+    # create a dictionary
+    field_list = [[row[field] if field != 'artist' else combined_artists[num] for field in the_fields] for num,row in uploaded_df.iterrows()]
+    #print(field_list)
+    field_list = pd.DataFrame(field_list).T.values.tolist()
+    #[[dist_fields[num].append(field) for num,field in entry] for entry in field_list]
+    #[[print(field) for field in entry] for entry in field_list]
+    new_dict = dict(zip(the_fields, field_list))
+
+    #print(new_dict)
+
+    # create new data frames from dictionary
+    new_df = pd.DataFrame(data=new_dict)
+    global the_frame
+    the_frame = new_df.copy()
+
+    #print(new_df)
+
+    #search each entry on discogs, show results, let user select most accurate one
+    the_results = []
+    the_entries = []
+    the_titles = []
+    the_artists = []
+    the_years = []
+    the_images = []
+    # even though we don't use it, the "num" in the for call below is necessary!!!!
+    for num,entry in the_frame.iterrows():
+        d_query = ""
+        for field in the_fields:
+            if isinstance(entry[field], str):
+                d_query += field+"="+entry[field]+","
+        this_entry = entry['title']+" - "+entry['artist']
+        the_results = ['test'] * 25
+        this_result = d.search(d_query,type="release")
+        
+        if (len(this_result) > 0 and len(this_result) < 25):
+            for item in this_result:
+                the_titles.append(item.title)
+                the_artists.append(item.artists[0].name)
+                the_years.append(item.year)
+                if item.images is not None: the_images.append(item.images[0]['resource_url'])
+                the_results.append(item.id)
+        elif (len(this_result) >= 25):
+            count = 0
+            for item in this_result:
+                the_results.append(item.id)
+                the_titles.append(item.title)
+                the_artists.append(item.artists[0].name)
+                the_years.append(item.year)
+                if item.images is not None: the_images.append(item.images[0]['resource_url'])
+                count += 1
+                if count > 24: break
+        else:
+            the_results.append(str(num))
+        the_entries.append(this_entry)
+    #print(the_results)
+    return render_template('get_options.html', results = the_results, entries = the_entries, titles = the_titles, artists = the_artists, years = the_years, images = the_images)
 
 
 @app.route('/check_fields')
