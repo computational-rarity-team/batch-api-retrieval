@@ -61,6 +61,77 @@ def upload_file():
  
         return render_template('success.html')
  
+@app.route('/mb_query')
+def mb_query():
+    # Retrieving uploaded file path from session
+    data_file_path = session.get('uploaded_data_file_path', None)
+ 
+    # read csv file in python flask (reading uploaded csv file from uploaded server location)
+    uploaded_df = pd.read_csv(data_file_path)
+
+    # load the pre-formatted field names for the headers
+    #the_fields = ["catno", "artist", "title", "label", "format", "year", "release_id"]
+    the_fields = ["alias", "arid", "artist", "artistname", "comment", "creditname", "primarytype", "reid", "release", "releasegroup", "releasegroupaccent", "releases", "rgid", "secondarytype", "status", "tag", "type"]
+
+    # to populate the fields properly, we'll have to combine the artist fields, stripping any spaces
+    # first make a new array to fill with the new artist values
+    combined_artists = []
+    # then fill that array with the new artist values
+    for entry,row in uploaded_df.iterrows():
+        #print(str(row['artist_first']),file=sys.stderr)
+        #print(str(row['artist_last']),file=sys.stderr)
+        if isinstance(row['First Name'], str) and isinstance(row['artist_last'], str):
+            combined_artists.append(row['First Name']+' '+row['Last Name'])
+        else:
+            if row['artist_first'] and not row['artist_last']:
+                combined_artists.append(row['artist_first'])
+            elif not row['artist_first'] and row['artist_last']:
+                combined_artists.append(row['artist_last'])
+            else:
+                combined_artists.append('')
+            
+    # then create a new dataframe with the combined artist array as a column replacing the other two
+    new_dict = dict(zip([None]*len(the_fields), the_fields))
+    # create a dictionary
+    field_list = [[row[field] if field != 'artist' else combined_artists[num] for field in the_fields] for num,row in uploaded_df.iterrows()]
+    #print(field_list)
+    field_list = pd.DataFrame(field_list).T.values.tolist()
+    #[[dist_fields[num].append(field) for num,field in entry] for entry in field_list]
+    #[[print(field) for field in entry] for entry in field_list]
+    new_dict = dict(zip(the_fields, field_list))
+
+    print(new_dict)
+
+    # create new data frames from dictionary
+    new_df = pd.DataFrame(data=new_dict)
+
+    #print(new_df)
+
+    #search each entry on discogs, show results, let user select most accurate one
+    the_results = []
+    the_titles = []
+    the_entries = []
+    for num,entry in new_df.iterrows():
+        '''
+        mb_query = ""
+        for field in the_fields:
+            if isinstance(entry[field], str):
+                mb_query += field+"="+entry[field]+","
+        '''
+        this_entry = entry['title']+" - "+entry['artist']
+        #this_result = d.search(d_query)
+        this_result = musicbrainzngs.search_release_groups(query=entry['title'])
+        if (len(this_result['release-group-list']) > 0):
+            result_ids = [result['id'] for result in this_result]
+            the_results.append(result_ids)
+        else:
+            #the_results.append("no results found on Discogs")
+            the_results.append("")
+        the_entries.append(this_entry)
+        render_template('mb_query.html', results = the_results)
+    #print(the_results)
+
+    return render_template('mb_query.html')
 
 @app.route('/show_data')
 def show_data():

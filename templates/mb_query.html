@@ -1,0 +1,23 @@
+{% extends 'layout.html' %}
+{% block title %}{{ result.title }}{% endblock%}
+
+
+{% block content %}
+<h1>Discogs and Musicbrainz Results</h1> 
+
+<h3>Musicbrainz Results</h3>
+<ul>
+    {% if result != 'not found' -%}
+    <li><a href="https://musicbrainz.org/release-group/{{result}}" target="_blank">{{result}}</a></li>
+    {% else -%}
+    <li><a href="https://musicbrainz.org/" target="_blank">Not found!</a></li>
+    {% endif %}
+</ul>
+
+{% endblock %}
+
+{% block footer %}
+<footer>created 2023 by the <a href="https://github.com/computational-rarity-team" target="_blank">Computational Rarity Team</a></footer>
+{% endblock %}
+
+{% block script %} <script type="text/javascript"> window.onload = () => console.log('Document ready!'); </script> {% endblock %}
